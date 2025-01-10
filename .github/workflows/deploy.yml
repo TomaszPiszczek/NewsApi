@@ -1,4 +1,4 @@
-name: Deploy App 1
+name: Deploy App
 
 on:
   push:
@@ -20,11 +20,18 @@ jobs:
           echo "${{ secrets.AWS_PEM }}" > key.pem
           chmod 600 key.pem
 
-      # Upewnienie się, że sieć Dockera istnieje
+      # Upewnienie się, że sieć Dockera istnieje na EC2
       - name: Ensure Docker network exists on EC2
         run: |
           ssh -i key.pem -o StrictHostKeyChecking=no ec2-user@51.20.68.13 << EOF
             docker network inspect my-network >/dev/null 2>&1 || docker network create my-network
+          EOF
+
+      # Tworzenie katalogu docelowego na EC2
+      - name: Ensure app directory exists on EC2
+        run: |
+          ssh -i key.pem -o StrictHostKeyChecking=no ec2-user@51.20.68.13 << EOF
+            mkdir -p ~/app
           EOF
 
       # Budowanie aplikacji z Maven
@@ -43,15 +50,23 @@ jobs:
           scp -i key.pem -o StrictHostKeyChecking=no target/*.jar ec2-user@51.20.68.13:~/app/
           scp -i key.pem -o StrictHostKeyChecking=no Dockerfile ec2-user@51.20.68.13:~/app/
 
+      # Weryfikacja zawartości katalogu na EC2
+      - name: List files in ~/app on EC2
+        run: |
+          ssh -i key.pem -o StrictHostKeyChecking=no ec2-user@51.20.68.13 << EOF
+            ls -lh ~/app
+          EOF
+
       # Zmiana nazwy pliku JAR na app.jar na EC2
       - name: Rename JAR file on EC2
         run: |
           ssh -i key.pem -o StrictHostKeyChecking=no ec2-user@51.20.68.13 << EOF
-            if [ -f ~/app/*.jar ]; then
-              mv ~/app/*.jar ~/app/app.jar
-            else
+            JAR_FILE=\$(ls ~/app/*.jar 2>/dev/null | head -n 1)
+            if [ -z "\$JAR_FILE" ]; then
               echo "No JAR file found in ~/app"
               exit 1
+            else
+              mv "\$JAR_FILE" ~/app/app.jar
             fi
           EOF
 
