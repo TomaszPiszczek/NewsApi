@@ -10,41 +10,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Sprawdzenie kodu z repozytorium
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Budowanie frontendu (katalog UI)
       - name: Build frontend
         run: |
           cd UI
           npm install
           npm run build
 
-      # Kopiowanie plików frontendu do backendu
       - name: Copy frontend files to backend
         run: |
           rm -rf src/main/resources/static/*
           cp -r UI/dist/* src/main/resources/static/
 
-      # Budowanie backendu z Maven
       - name: Build backend
         run: |
           mvn clean package -DskipTests
 
-      # Weryfikacja plików wynikowych
       - name: Verify build outputs
         run: |
           ls -lh target/*.jar
           ls -lh src/main/resources/static/
 
-      # Wysyłanie plików na EC2
       - name: Push application files to EC2
         run: |
           scp -i key.pem -o StrictHostKeyChecking=no target/*.jar ec2-user@51.20.68.13:~/app2/app.jar
           scp -i key.pem -o StrictHostKeyChecking=no Dockerfile ec2-user@51.20.68.13:~/app2/Dockerfile
 
-      # Uruchamianie kontenera Dockera na EC2
       - name: Run Docker container on EC2
         run: |
           ssh -i key.pem -o StrictHostKeyChecking=no ec2-user@51.20.68.13 << EOF
@@ -55,7 +48,6 @@ jobs:
             docker run -d -p 8080:8080 --name spring-boot-container-2 my-spring-boot-app-2
           EOF
 
-      # Testowanie statusu kontenera Dockera
       - name: Test container status on EC2
         run: |
           ssh -i key.pem -o StrictHostKeyChecking=no ec2-user@51.20.68.13 << EOF
