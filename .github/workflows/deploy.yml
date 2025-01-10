@@ -47,7 +47,12 @@ jobs:
       - name: Rename JAR file on EC2
         run: |
           ssh -i key.pem -o StrictHostKeyChecking=no ec2-user@51.20.68.13 << EOF
-            mv ~/app/*.jar ~/app/app.jar
+            if [ -f ~/app/*.jar ]; then
+              mv ~/app/*.jar ~/app/app.jar
+            else
+              echo "No JAR file found in ~/app"
+              exit 1
+            fi
           EOF
 
       # Uruchamianie kontenera Dockera na EC2
