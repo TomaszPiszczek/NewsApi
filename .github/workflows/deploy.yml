@@ -70,15 +70,25 @@ jobs:
             fi
           EOF
 
+      # Usuwanie istniejących kontenerów na porcie 8080
+      - name: Stop and remove containers on port 8080
+        run: |
+          ssh -i key.pem -o StrictHostKeyChecking=no ec2-user@51.20.68.13 << EOF
+            CONTAINER_ID=\$(docker ps -q --filter "expose=8080")
+            if [ ! -z "\$CONTAINER_ID" ]; then
+              echo "Stopping containers on port 8080"
+              docker stop \$CONTAINER_ID || true
+              docker rm \$CONTAINER_ID || true
+            fi
+          EOF
+
       # Uruchamianie kontenera Dockera na EC2
       - name: Run Docker container on EC2
         run: |
           ssh -i key.pem -o StrictHostKeyChecking=no ec2-user@51.20.68.13 << EOF
             cd ~/app/
-            docker stop spring-boot-container || true
-            docker rm spring-boot-container || true
             docker build -t my-spring-boot-app .
-            docker run -d --network my-network -p 8081:8081 --name spring-boot-container my-spring-boot-app
+            docker run -d --network my-network -p 8080:8080 --name spring-boot-container my-spring-boot-app
           EOF
 
       # Testowanie statusu kontenera
