@@ -5,7 +5,7 @@ import websiteIcon from '../icon/website.png';
 import apiIcon from '../icon/api.png';
 import githubIcon from '../icon/github.png'; 
 import erdSchema from '../img/erdschema.png'
-import styles from '../styles/header/Home.module.css';
+import styles from '../styles/Header/Home.module.css';
 
 const Home = () => {
   const [selectedFeature, setSelectedFeature] = useState('');
