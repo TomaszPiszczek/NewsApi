@@ -1,6 +1,7 @@
 package com.example.NewsApi.config;
 
 import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,16 +9,16 @@ import org.springframework.context.annotation.Configuration;
 import javax.sql.DataSource;
 
 @Configuration
-@AllArgsConstructor
 public class DataSourceConfig {
-
+    @Value("${database.password}")
+    private String dbPassword;
 
     @Bean
     public DataSource dataSource() {
         return DataSourceBuilder.create()
-                .url("jdbc:postgresql://16.170.252.4:5432/CityNews")
+                .url("jdbc:postgresql://localhost/CityNews")
                 .username("postgres")
-                .password(SecretsManagerService.getSecretValue("dbPassword"))
+                .password(dbPassword)
                 .driverClassName("org.postgresql.Driver")
                 .build();
     }

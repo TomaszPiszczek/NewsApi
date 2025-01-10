@@ -1,0 +1,57 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+
+      - name: Copy frontend files to backend
+        run: |
+          rm -rf backend/src/main/resources/static/*
+          cp -r frontend/dist/* backend/src/main/resources/static/
+
+      - name: Build backend
+        run: |
+          cd backend
+          mvn clean package -DskipTests
+
+      - name: Verify build outputs
+        run: |
+          ls -lh backend/target/*.jar
+          ls -lh backend/src/main/resources/static/
+
+      - name: Push application files to EC2
+        run: |
+          scp -i key.pem -o StrictHostKeyChecking=no backend/target/*.jar ec2-user@51.20.68.13:~/app2/app.jar
+          scp -i key.pem -o StrictHostKeyChecking=no backend/Dockerfile ec2-user@51.20.68.13:~/app2/Dockerfile
+
+      - name: Run Docker container on EC2
+        run: |
+          ssh -i key.pem -o StrictHostKeyChecking=no ec2-user@51.20.68.13 << EOF
+            cd ~/app2/
+            docker stop spring-boot-container-2 || true
+            docker rm spring-boot-container-2 || true
+            docker build -t my-spring-boot-app-2 .
+            docker run -d -p 8080:8080 --name spring-boot-container-2 my-spring-boot-app-2
+          EOF
+
+      - name: Test container status on EC2
+        run: |
+          ssh -i key.pem -o StrictHostKeyChecking=no ec2-user@51.20.68.13 << EOF
+            docker ps | grep spring-boot-container-2 || exit 1
+            docker logs spring-boot-container-2
+          EOF

@@ -1,0 +1,104 @@
+html, body {
+  height: 100%;  
+  margin: 0;     
+  display: flex;
+  flex-direction: column;  
+}
+
+.App {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;       
+  min-height: 100vh;  
+}
+
+.main-content {
+  flex-grow: 1;  
+}
+
+/* Nagłówek */
+.header {
+  position: relative;
+  z-index: 10;
+  background-color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Stopka */
+.footer {
+  background-color: #333;
+  color: #fff;
+  padding: 20px 0;
+  text-align: center;
+  font-size: 0.9rem;
+  width: 100%;
+  margin-top: auto;  
+}
+
+.footer .content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.licenseSection {
+  margin-bottom: 20px;
+}
+
+.license {
+  font-size: 1rem;
+  color: #ccc;
+}
+
+.navLinks ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.navLinks li {
+  margin: 0;
+}
+
+.navLinks a {
+  color: #ccc;
+  text-decoration: none;
+}
+
+.navLinks a:hover {
+  text-decoration: underline;
+}
+
+.contact {
+  margin: 20px 0;
+}
+
+.contact a {
+  color: #ccc;
+  text-decoration: none;
+}
+
+.contact a:hover {
+  text-decoration: underline;
+}
+
+.socialMedia {
+  margin-top: 20px;
+}
+
+.socialMedia a {
+  color: #ccc;
+  margin: 0 10px;
+  text-decoration: none;
+}
+
+.socialMedia a:hover {
+  color: #1da1f2; 
+}
