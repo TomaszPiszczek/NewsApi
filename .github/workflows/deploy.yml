@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy App 1
 
 on:
   push:
@@ -19,78 +19,52 @@ jobs:
         run: |
           echo "${{ secrets.AWS_PEM }}" > key.pem
           chmod 600 key.pem
-          echo "Length of key:"
-          wc -c < key.pem
-          echo "First 10 characters of key:"
-          head -c 10 key.pem
-          echo "Last 10 characters of key:"
-          tail -c 10 key.pem
 
-      # Ustawienie Node.js dla frontendu
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
-      # Budowanie frontendu (katalog UI)
-      - name: Build frontend
+      # Upewnienie się, że sieć Dockera istnieje
+      - name: Ensure Docker network exists on EC2
         run: |
-          cd UI
-          npm install
-          npm run build
+          ssh -i key.pem -o StrictHostKeyChecking=no ec2-user@51.20.68.13 << EOF
+            docker network inspect my-network >/dev/null 2>&1 || docker network create my-network
+          EOF
 
-      # Kopiowanie plików frontendu do backendu
-      - name: Copy frontend files to backend
-        run: |
-          rm -rf src/main/resources/static/*
-          cp -r UI/dist/* src/main/resources/static/
-
-      # Budowanie backendu z Maven
-      - name: Build backend
-        run: |
-          mvn clean package -DskipTests
+      # Budowanie aplikacji z Maven
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
 
       # Weryfikacja plików wynikowych
       - name: Verify build outputs
         run: |
           ls -lh target/*.jar
-          ls -lh src/main/resources/static/
-
-      # Upewnienie się, że katalog na EC2 istnieje
-      - name: Ensure target directory exists on EC2
-        run: |
-          ssh -i key.pem -o StrictHostKeyChecking=no ec2-user@51.20.68.13 << EOF
-            mkdir -p ~/app2/
-          EOF
+          ls -lh Dockerfile
 
       # Wysyłanie plików na EC2
       - name: Push application files to EC2
         run: |
-          scp -i key.pem -o StrictHostKeyChecking=no target/*.jar ec2-user@51.20.68.13:~/app2/
-          scp -i key.pem -o StrictHostKeyChecking=no Dockerfile ec2-user@51.20.68.13:~/app2/
+          scp -i key.pem -o StrictHostKeyChecking=no target/*.jar ec2-user@51.20.68.13:~/app/
+          scp -i key.pem -o StrictHostKeyChecking=no Dockerfile ec2-user@51.20.68.13:~/app/
 
       # Zmiana nazwy pliku JAR na app.jar na EC2
       - name: Rename JAR file on EC2
         run: |
           ssh -i key.pem -o StrictHostKeyChecking=no ec2-user@51.20.68.13 << EOF
-            mv ~/app2/*.jar ~/app2/app.jar
+            mv ~/app/*.jar ~/app/app.jar
           EOF
 
       # Uruchamianie kontenera Dockera na EC2
       - name: Run Docker container on EC2
         run: |
           ssh -i key.pem -o StrictHostKeyChecking=no ec2-user@51.20.68.13 << EOF
-            cd ~/app2/
-            docker stop spring-boot-container-2 || true
-            docker rm spring-boot-container-2 || true
-            docker build -t my-spring-boot-app-2 .
-            docker run -d -p 8080:8080 --name spring-boot-container-2 my-spring-boot-app-2
+            cd ~/app/
+            docker stop spring-boot-container || true
+            docker rm spring-boot-container || true
+            docker build -t my-spring-boot-app .
+            docker run -d --network my-network -p 8081:8081 --name spring-boot-container my-spring-boot-app
           EOF
 
-      # Testowanie statusu kontenera Dockera
+      # Testowanie statusu kontenera
       - name: Test container status on EC2
         run: |
           ssh -i key.pem -o StrictHostKeyChecking=no ec2-user@51.20.68.13 << EOF
-            docker ps | grep spring-boot-container-2 || exit 1
-            docker logs spring-boot-container-2
+            docker ps | grep spring-boot-container || exit 1
+            docker logs spring-boot-container
           EOF
