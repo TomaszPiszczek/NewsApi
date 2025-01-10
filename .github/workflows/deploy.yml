@@ -70,15 +70,13 @@ jobs:
             fi
           EOF
 
-      # Usuwanie istniejących kontenerów na porcie 8080
-      - name: Stop and remove containers on port 8080
+      # Usuwanie istniejącego kontenera o tej samej nazwie
+      - name: Stop and remove existing container
         run: |
           ssh -i key.pem -o StrictHostKeyChecking=no ec2-user@51.20.68.13 << EOF
-            CONTAINER_ID=\$(docker ps -q --filter "expose=8080")
-            if [ ! -z "\$CONTAINER_ID" ]; then
-              echo "Stopping containers on port 8080"
-              docker stop \$CONTAINER_ID || true
-              docker rm \$CONTAINER_ID || true
+            if docker ps -a --format '{{.Names}}' | grep -q '^spring-boot-container$'; then
+              docker stop spring-boot-container || true
+              docker rm spring-boot-container || true
             fi
           EOF
 
