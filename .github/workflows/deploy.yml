@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout kodu
+      # Sprawdzenie kodu z repozytorium
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -25,6 +25,12 @@ jobs:
           head -c 10 key.pem
           echo "Last 10 characters of key:"
           tail -c 10 key.pem
+
+      # Ustawienie Node.js dla frontendu
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
 
       # Budowanie frontendu (katalog UI)
       - name: Build frontend
@@ -50,11 +56,25 @@ jobs:
           ls -lh target/*.jar
           ls -lh src/main/resources/static/
 
+      # Upewnienie się, że katalog na EC2 istnieje
+      - name: Ensure target directory exists on EC2
+        run: |
+          ssh -i key.pem -o StrictHostKeyChecking=no ec2-user@51.20.68.13 << EOF
+            mkdir -p ~/app2/
+          EOF
+
       # Wysyłanie plików na EC2
       - name: Push application files to EC2
         run: |
-          scp -i key.pem -o StrictHostKeyChecking=no target/*.jar ec2-user@51.20.68.13:~/app2/app.jar
-          scp -i key.pem -o StrictHostKeyChecking=no Dockerfile ec2-user@51.20.68.13:~/app2/Dockerfile
+          scp -i key.pem -o StrictHostKeyChecking=no target/*.jar ec2-user@51.20.68.13:~/app2/
+          scp -i key.pem -o StrictHostKeyChecking=no Dockerfile ec2-user@51.20.68.13:~/app2/
+
+      # Zmiana nazwy pliku JAR na app.jar na EC2
+      - name: Rename JAR file on EC2
+        run: |
+          ssh -i key.pem -o StrictHostKeyChecking=no ec2-user@51.20.68.13 << EOF
+            mv ~/app2/*.jar ~/app2/app.jar
+          EOF
 
       # Uruchamianie kontenera Dockera na EC2
       - name: Run Docker container on EC2
