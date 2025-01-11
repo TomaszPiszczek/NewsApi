@@ -7,7 +7,7 @@ export const fetchCities = async () => {
         const response = await axios.get(`${API_URL}/cities`);
         return response.data;
     } catch (error) {
-        console.error('Error fetching cities:', error);
+        console.error('Error fetching city:', error);
         throw error;
     }
 };
@@ -17,7 +17,7 @@ export const fetchStates = async () => {
         const response = await axios.get(`${API_URL}/states`);
         return response.data;
     } catch (error) {
-        console.error('Error fetching states:', error);
+        console.error('Error fetching state:', error);
         throw error;
     }
 };
