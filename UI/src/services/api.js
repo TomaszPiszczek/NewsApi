@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8081/api';
+const API_URL = 'http://51.20.68.13:8080/api';
 
 export const fetchCities = async () => {
     try {
