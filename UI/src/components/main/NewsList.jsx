@@ -16,13 +16,12 @@ const NewsList = ({ cityId, stateId, isGlobal }) => {
     const fetchNews = async () => {
       let url = '';
       const offset = (currentPage - 1) * pageSize;
-
       if (isGlobal) {
-        url = `http://16.170.252.4:8081/api/news/global?pageSize=${pageSize}&offset=${offset}`;  // Nowy URL dla globalnych newsów
+        url = `http://51.20.68.13:8080/api/news/global?pageSize=${pageSize}&offset=${offset}`;
       } else if (cityId) {
-        url = `http://16.170.252.4:8081/api/news/by-city/${cityId}?pageSize=${pageSize}&offset=${offset}`;
+        url = `http://51.20.68.13:8080/api/news/by-city/${cityId}?pageSize=${pageSize}&offset=${offset}`;
       } else if (stateId) {
-        url = `http://16.170.252.4:8081/api/news/by-state/${stateId}?pageSize=${pageSize}&offset=${offset}`;
+        url = `http://51.20.68.13:8080/api/news/by-state/${stateId}?pageSize=${pageSize}&offset=${offset}`;
       }
 
       setLoading(true);
