@@ -34,6 +34,19 @@ jobs:
             mkdir -p ~/app
           EOF
 
+      # Instalacja i budowanie frontendu
+      - name: Build frontend
+        run: |
+          cd UI
+          npm install
+          npm run build
+
+      # Kopiowanie plików z dist do backendu
+      - name: Copy frontend build to backend static folder
+        run: |
+          rm -rf src/main/resources/static/*
+          cp -r UI/dist/* src/main/resources/static/
+
       # Budowanie aplikacji z Maven
       - name: Build with Maven
         run: mvn clean package -DskipTests
